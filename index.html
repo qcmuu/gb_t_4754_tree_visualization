@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GB/T 4754-2017 Classification Tree Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .search-box {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            width: 300px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box:focus {
+            border-color: #667eea;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #5a67d8;
+        }
+        
+        .tree-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            overflow: auto;
+        }
+        
+        .tree {
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .tree-node {
+            margin: 2px 0;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .tree-node:hover {
+            background-color: #f0f4ff;
+        }
+        
+        .tree-node.expanded {
+            background-color: #e8f2ff;
+        }
+        
+        .tree-node.collapsed {
+            opacity: 0.7;
+        }
+        
+        .node-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #667eea;
+            user-select: none;
+        }
+        
+        .toggle-icon:hover {
+            color: #5a67d8;
+        }
+        
+        .code {
+            font-weight: bold;
+            color: #2d3748;
+            min-width: 60px;
+        }
+        
+        .name-zh {
+            color: #4a5568;
+            margin-right: 10px;
+        }
+        
+        .name-en {
+            color: #718096;
+            font-style: italic;
+        }
+        
+        .level-category { color: #e53e3e; font-weight: bold; }
+        .level-major { color: #dd6b20; font-weight: bold; }
+        .level-medium { color: #38a169; }
+        .level-subclass { color: #3182ce; }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .highlight {
+            background-color: #fff3cd !important;
+            border: 2px solid #ffc107;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+        }
+        
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            color: #6c757d;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 300px;
+            word-wrap: break-word;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GB/T 4754-2017 Classification Tree</h1>
+        <p>National Industry Classification Standard of People's Republic of China</p>
+    </div>
+    
+    <div class="controls">
+        <input type="text" class="search-box" id="searchBox" placeholder="Search by code or name (English/Chinese)...">
+        <button class="button" onclick="expandAll()">Expand All</button>
+        <button class="button" onclick="collapseAll()">Collapse All</button>
+        <button class="button" onclick="clearSearch()">Clear Search</button>
+    </div>
+    
+    <div class="tree-container">
+        <div id="loading" class="loading">Loading classification data...</div>
+        <div id="tree" class="tree" style="display: none;"></div>
+    </div>
+    
+    <div class="stats" id="stats"></div>
+
+    <script src="gb_t_4754_data_corrected.js"></script>
+    <script>
+        let treeData = {};
+        let allNodes = [];
+        let expandedNodes = new Set();
+        
+        // Load embedded data
+        function loadData() {
+            try {
+                buildTree(csvData);
+                renderTree();
+                updateStats(csvData.length);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loading').innerHTML = 'Error loading data. Please check the data file.';
+            }
+        }
+        
+        function buildTree(data) {
+            // First, create all nodes
+            data.forEach(item => {
+                treeData[item.code] = {
+                    ...item,
+                    children: []
+                };
+            });
+            
+            // Then, build parent-child relationships
+            data.forEach(item => {
+                if (item.parentCode && treeData[item.parentCode]) {
+                    treeData[item.parentCode].children.push(treeData[item.code]);
+                }
+            });
+            
+            // Find root nodes (those without parents or with non-existent parents)
+            allNodes = data.filter(item => !item.parentCode || !treeData[item.parentCode]);
+        }
+        
+        function renderTree() {
+            const treeContainer = document.getElementById('tree');
+            treeContainer.innerHTML = '';
+            
+            allNodes.forEach(node => {
+                renderNode(treeData[node.code], treeContainer, 0);
+            });
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tree').style.display = 'block';
+        }
+        
+        function renderNode(node, container, depth) {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `tree-node level-${node.level.toLowerCase()}`;
+            nodeDiv.id = `node-${node.code}`;
+            
+            const indent = '  '.repeat(depth);
+            const hasChildren = node.children && node.children.length > 0;
+            const isExpanded = expandedNodes.has(node.code);
+            
+            let toggleIcon = '';
+            if (hasChildren) {
+                toggleIcon = `<span class="toggle-icon" onclick="toggleNode('${node.code}')">${isExpanded ? '▼' : '▶'}</span>`;
+                nodeDiv.classList.add(isExpanded ? 'expanded' : 'collapsed');
+            } else {
+                toggleIcon = '<span class="toggle-icon">•</span>';
+            }
+            
+            nodeDiv.innerHTML = `
+                <div class="node-content">
+                    ${indent}${toggleIcon}
+                    <span class="code">[${node.code}]</span>
+                    <span class="name-zh">${node.nameZh}</span>
+                    <span class="name-en">(${node.nameEn})</span>
+                </div>
+            `;
+            
+            // Add tooltip with additional information
+            if (node.note && node.note !== '#VALUE!') {
+                nodeDiv.title = `Level: ${node.level}\nNote: ${node.note}`;
+            } else {
+                nodeDiv.title = `Level: ${node.level}\nKeywords: ${node.keywords}`;
+            }
+            
+            container.appendChild(nodeDiv);
+            
+            // Render children if expanded
+            if (hasChildren && isExpanded) {
+                node.children.forEach(child => {
+                    renderNode(child, container, depth + 1);
+                });
+            }
+        }
+        
+        function toggleNode(code) {
+            if (expandedNodes.has(code)) {
+                expandedNodes.delete(code);
+            } else {
+                expandedNodes.add(code);
+            }
+            renderTree();
+        }
+        
+        function expandAll() {
+            Object.keys(treeData).forEach(code => {
+                if (treeData[code].children && treeData[code].children.length > 0) {
+                    expandedNodes.add(code);
+                }
+            });
+            renderTree();
+        }
+        
+        function collapseAll() {
+            expandedNodes.clear();
+            renderTree();
+        }
+        
+        function searchTree() {
+            const query = document.getElementById('searchBox').value.toLowerCase().trim();
+            const allTreeNodes = document.querySelectorAll('.tree-node');
+            
+            // Clear previous highlights
+            allTreeNodes.forEach(node => {
+                node.classList.remove('highlight', 'hidden');
+            });
+            
+            if (!query) return;
+            
+            let matchFound = false;
+            allTreeNodes.forEach(node => {
+                const text = node.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    node.classList.add('highlight');
+                    matchFound = true;
+                    
+                    // Expand parent nodes to show the match
+                    const code = node.id.replace('node-', '');
+                    expandParents(code);
+                } else {
+                    node.classList.add('hidden');
+                }
+            });
+            
+            if (matchFound) {
+                renderTree(); // Re-render to show expanded parents
+            }
+        }
+        
+        function expandParents(code) {
+            const node = treeData[code];
+            if (node && node.parentCode) {
+                expandedNodes.add(node.parentCode);
+                expandParents(node.parentCode);
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchBox').value = '';
+            document.querySelectorAll('.tree-node').forEach(node => {
+                node.classList.remove('highlight', 'hidden');
+            });
+        }
+        
+        function updateStats(totalCount) {
+            const categoryCount = Object.values(treeData).filter(n => n.level === 'Category').length;
+            const majorCount = Object.values(treeData).filter(n => n.level === 'Major').length;
+            const mediumCount = Object.values(treeData).filter(n => n.level === 'Medium').length;
+            const subclassCount = Object.values(treeData).filter(n => n.level === 'Subclass').length;
+            
+            document.getElementById('stats').innerHTML = `
+                <strong>Classification Statistics:</strong> 
+                Total: ${totalCount} | 
+                Categories (门类): ${categoryCount} | 
+                Major (大类): ${majorCount} | 
+                Medium (中类): ${mediumCount} | 
+                Subclass (小类): ${subclassCount}
+            `;
+        }
+        
+        // Setup search functionality
+        document.getElementById('searchBox').addEventListener('input', function() {
+            setTimeout(searchTree, 300); // Debounce search
+        });
+        
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
