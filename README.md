@@ -28,6 +28,9 @@ This project provides a web-based interactive interface for browsing and searchi
 ```
 ├── gb_t_4754_tree_visualization.html    # Main visualization interface
 ├── gb_t_4754_data_corrected.js         # GB/T 4754-2017 classification data
+├── raw_data/                           # Raw data files
+├── scripts/                            # Data processing scripts
+└── documentation/                      # Project documentation
 ```
 
 ## Usage
@@ -69,11 +72,17 @@ GB/T 4754-2017 contains:
 ## Related Projects
 
 This repository also includes a similar visualization tool for ISIC Rev.5 (International Standard Industrial Classification):
-- [isic_rev5_tree_visualization](https://github.com/qcmuu/isic_rev5_tree_visualization)
+- `isic_rev5_tree_visualization.html`
 
 ## License
 
 This project is for educational and research purposes only. The GB/T 4754-2017 classification standard is copyrighted by the National Bureau of Statistics of China.
+
+## Credits
+
+This project was developed by researchers from:
+- **SNU** (Seoul National University)
+- **HKU** (The University of Hong Kong)
 
 ## Contributing
 
@@ -81,4 +90,4 @@ Issues and Pull Requests are welcome to improve this project.
 
 ---
 
-*Last updated: January 2025*
+*Last updated: August 2025*
